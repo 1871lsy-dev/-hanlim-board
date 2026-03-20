@@ -8,16 +8,18 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    body { margin: 0; padding: 0; font-family: sans-serif; background-color: #f3f4f6; }
+    body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: sans-serif; }
+    #root { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .loading { font-size: 1.2rem; color: #667; }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root"><div class="loading">보드를 불러오는 중입니다...</div></div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-import { useState, useEffect } from "react";
+  import { useState, useEffect } from "react";
 
 const DEFAULT_MEMBERS = [
   {name:"최근주",color:"#6366F1"},{name:"김건식",color:"#EC4899"},{name:"박종애",color:"#F59E0B"},
@@ -717,12 +719,18 @@ export default function App(){
     </div>
   );
 }
-
-
     
+    function App() {
+      return (
+        <div style={{padding: '20px', textAlign: 'center'}}>
+          <h1>한림바이오팜 업무 현황 보드</h1>
+          <p>코드가 정상적으로 연결되었습니다!</p>
+        </div>
+      );
+    }
+
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />); 
+    root.render(<App />);
   </script>
 </body>
 </html>
-   
