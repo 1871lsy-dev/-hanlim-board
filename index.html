@@ -4,12 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>한림바이오팜 업무 현황</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; padding: 0; background-color: #f9fafb; }
+  </style>
 </head>
 <body>
   <div id="root"></div>
+  
   <script type="text/babel" src="./app.jsx"></script>
+
+  <script type="text/babel">
+    // 만약 app.jsx 로딩에 실패할 경우를 대비한 체크용 로그 (F12 콘솔에서 확인 가능)
+    console.log("React & Babel 준비 완료");
+  </script>
 </body>
 </html>
