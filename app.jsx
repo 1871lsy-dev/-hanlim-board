@@ -106,7 +106,7 @@ function TabIcon({name,active}){
 
 const iS={width:"100%",boxSizing:"border-box",borderRadius:10,border:"1px solid #D1D5DB",padding:"10px 12px",fontSize:14};
 
-export default function App(){
+ function App(){
   const now=new Date();
   const TODAY=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
   const todayDow=now.getDay();
