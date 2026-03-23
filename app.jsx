@@ -2,13 +2,13 @@
 // ⚠️  3단계에서 복사한 firebaseConfig 값으로 교체하세요
 // ─────────────────────────────────────────────
 const FIREBASE_CONFIG = {
-  apiKey: "여기에_입력",
-  authDomain: "여기에_입력",
-  databaseURL: "여기에_입력",  // ← 반드시 입력! (https://...firebaseio.com)
-  projectId: "여기에_입력",
-  storageBucket: "여기에_입력",
-  messagingSenderId: "여기에_입력",
-  appId: "여기에_입력",
+  apiKey: "AIzaSyC04Ir2Jt7nZrrJGfGwSxUWOkd3sv7kwDA",
+  authDomain: "hanlim-board.firebaseapp.com",
+  databaseURL: "https://hanlim-board-default-rtdb.firebaseio.com",
+  projectId: "hanlim-board",
+  storageBucket: "hanlim-board.firebasestorage.app",
+  messagingSenderId: "663569376513",
+  appId: "1:663569376513:web:a3829d45c6d01bbfb1e700",
 };
 // ─────────────────────────────────────────────
 
