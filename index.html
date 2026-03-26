@@ -2,122 +2,39 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>한림바이오팜 업무 현황</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Pretendard', 'Inter', sans-serif; background: #F8FAFC; }
+    select, input, textarea, button { font-family: inherit; }
+  </style>
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel" src="./app.jsx"></script>
-  <script type="text/babel">
-    ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-  </script>
-</body>
-</html>
 
-    // --- 사용자님의 원본 데이터 및 설정 시작 ---
-    const DEFAULT_MEMBERS = [
-      {name:"최근주",color:"#6366F1"},{name:"김건식",color:"#EC4899"},{name:"박종애",color:"#F59E0B"},
-      {name:"장문식",color:"#10B981"},{name:"이수연",color:"#3B82F6"},{name:"손수현",color:"#EF4444"},
-      {name:"전은진",color:"#8B5CF6"},{name:"정화연",color:"#14B8A6"},{name:"정소연",color:"#F97316"},
-      {name:"신선옥",color:"#06B6D4"},{name:"이희수",color:"#84CC16"},{name:"김도현",color:"#A855F7"},
-      {name:"최성희",color:"#0EA5E9"},{name:"송태호",color:"#D946EF"},{name:"김흥기",color:"#22C55E"},
-      {name:"양희경",color:"#FB923C"},{name:"강선숙",color:"#64748B"},{name:"우희경",color:"#EAB308"},
-    ];
-    const COLOR_OPTIONS = ["#6366F1","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#8B5CF6","#14B8A6","#F97316","#06B6D4","#84CC16","#A855F7","#0EA5E9","#D946EF","#22C55E","#FB923C","#64748B","#EAB308","#E11D48","#0891B2","#16A34A","#CA8A04","#7C3AED","#DB2777"];
-    const COLS = ["할 일","진행 중","완료"];
-    const WEEKDAYS = ["일","월","화","수","목","금","토"];
-    const WEEKDAY_FULL = ["일요일","월요일","화요일","수요일","목요일","금요일","토요일"];
-    const HOURS = Array.from({length:24},(_,i)=>String(i).padStart(2,"0"));
-    const MINUTES = ["00","10","20","30","40","50"];
-    const TABS = ["홈","칸반","일정","반복","통계","일지"];
-    const COL_STYLE = {"할 일":{dot:"#6366F1",light:"#EEF2FF",text:"#3730A3",border:"#C7D2FE"},"진행 중":{dot:"#F59E0B",light:"#FFFBEB",text:"#92400E",border:"#FDE68A"},"완료":{dot:"#10B981",light:"#ECFDF5",text:"#065F46",border:"#A7F3D0"}};
-    const PRIORITY_STYLE = {"높음":{bg:"#FEE2E2",text:"#991B1B",bar:"#EF4444"},"중간":{bg:"#FEF3C7",text:"#92400E",bar:"#F59E0B"},"낮음":{bg:"#D1FAE5",text:"#065F46",bar:"#10B981"}};
-    const DAY_COLORS = [{bg:"#FEE2E2",text:"#991B1B",border:"#FCA5A5"},{bg:"#EEF2FF",text:"#3730A3",border:"#A5B4FC"},{bg:"#FFFBEB",text:"#92400E",border:"#FCD34D"},{bg:"#ECFDF5",text:"#065F46",border:"#6EE7B7"},{bg:"#EFF6FF",text:"#1E40AF",border:"#93C5FD"},{bg:"#F5F3FF",text:"#5B21B6",border:"#C4B5FD"},{bg:"#FDF4FF",text:"#86198F",border:"#E879F9"}];
+  <!-- React -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 
-    const DEFAULT_TASKS = [{id:1,title:"신제품 원료 수급 검토",assignee:"최근주",priority:"높음",due:"2026-03-25",col:"할 일",comments:[]},{id:2,title:"품질 관리 보고서 작성",assignee:"김건식",priority:"중간",due:"2026-03-28",col:"진행 중",comments:[]},{id:3,title:"GMP 감사 준비",assignee:"박종애",priority:"높음",due:"2026-03-30",col:"진행 중",comments:[]},{id:4,title:"거래처 미팅 자료 준비",assignee:"장문식",priority:"낮음",due:"2026-04-05",col:"할 일",comments:[]},{id:5,title:"1분기 생산 실적 집계",assignee:"이수연",priority:"중간",due:"2026-03-20",col:"완료",comments:[]},{id:6,title:"포장재 발주 확인",assignee:"손수현",priority:"높음",due:"2026-03-21",col:"할 일",comments:[]}];
-    const DEFAULT_SCHEDULES = [{id:1,member:"최근주",date:"2026-03-21",content:"오전 원료팀 회의"},{id:2,member:"김건식",date:"2026-03-21",content:"품질 점검 현장 방문"},{id:3,member:"박종애",date:"2026-03-24",content:"GMP 사전 감사"},{id:4,member:"장문식",date:"2026-03-21",content:"거래처 미팅 (오후 2시)"},{id:5,member:"이수연",date:"2026-03-25",content:"연구소 출장"}];
-    const DEFAULT_RECURRING = [{id:1,title:"주간 팀 미팅",days:[1],startH:"09",startM:"00",endH:"10",endM:"00",content:"전체 업무 현황 공유",assignee:"모두",exceptions:[]},{id:2,title:"품질 점검 회의",days:[3],startH:"14",startM:"00",endH:"15",endM:"00",content:"품질 이슈 검토",assignee:"김건식",exceptions:[]},{id:3,title:"생산 라인 점검",days:[1,3,5],startH:"08",startM:"00",endH:"08",endM:"30",content:"오전 라인 점검",assignee:"박종애",exceptions:[]}];
-    const DEFAULT_NOTICES = [{id:1,text:"한림바이오팜 업무 현황 보드에 오신 것을 환영합니다 🎉",active:true}];
-    const EMPTY_REC = {title:"",days:[],startH:"09",startM:"00",endH:"10",endM:"00",content:"",assignee:"모두",exceptions:[]};
-    const EMPTY_TASK = {title:"",priority:"중간",due:"",col:"할 일"};
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-    // --- 여기부터 사용자님이 주신 App 함수 전체를 넣습니다 ---
-    
-    // (사용자님이 주신 app.jsx의 모든 내용을 제가 브라우저용으로 다듬어 통합했습니다.)
-    // 복사하신 후 index.html에 적용하면 예전 그 모습 그대로 나타납니다.
+  <!-- Babel (JSX 변환) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    function Avatar({name,members,size=26}){
-      if(!name||name==="모두") return <div style={{width:size,height:size,borderRadius:"50%",background:"#E5E7EB",border:"1.5px solid #D1D5DB",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.4,flexShrink:0}}>👥</div>;
-      const m=members?.find(x=>x.name===name);const color=m?.color||"#6366F1";
-      return <div style={{width:size,height:size,borderRadius:"50%",background:color+"22",border:`1.5px solid ${color}66`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.42,fontWeight:700,color,flexShrink:0}}>{name.slice(0,1)}</div>;
-    }
+  <!-- 앱 코드 -->
+  <script type="text/babel" src="./app.jsx" data-presets="react"></script>
 
-    function App() {
-      // 여기에 사용자님의 app.jsx 로직이 모두 들어갑니다.
-      // [주의] 브라우저 환경에서는 window.storage 대신 localStorage를 쓰도록 살짝 변경했습니다.
-      
-      const [members, setMembers] = useState(DEFAULT_MEMBERS);
-      const [tasks, setTasks] = useState(DEFAULT_TASKS);
-      const [schedules, setSchedules] = useState(DEFAULT_SCHEDULES);
-      const [recurring, setRecurring] = useState(DEFAULT_RECURRING);
-      const [tab, setTab] = useState("홈");
-
-      return (
-        <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-lg pb-20">
-          <header className="bg-indigo-600 p-6 text-white text-center">
-             <h1 className="text-xl font-bold">🏢 한림바이오팜 업무 현황</h1>
-             <p className="text-sm opacity-80 mt-1">2026. 03. 21. (토)</p>
-          </header>
-
-          <div className="flex border-b text-sm sticky top-0 bg-white z-10">
-            {TABS.map(t => (
-              <button key={t} onClick={() => setTab(t)} className={`flex-1 py-3 ${tab===t ? 'text-indigo-600 border-b-2 border-indigo-600 font-bold' : 'text-gray-400'}`}>{t}</button>
-            ))}
-          </div>
-
-          <div className="p-4">
-             {tab === "홈" && (
-               <div className="space-y-6">
-                 <section>
-                   <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">📌 오늘 꼭 해야 할 일 <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{tasks.filter(t=>t.col!=="완료").length}</span></h3>
-                   {tasks.filter(t=>t.col!=="완료").map(t => (
-                     <div key={t.id} className="bg-white border rounded-xl p-4 mb-3 shadow-sm flex justify-between items-center">
-                       <div>
-                         <div className="font-medium text-gray-900">{t.title}</div>
-                         <div className="text-xs text-gray-400 mt-1">{t.assignee} · {t.due}</div>
-                       </div>
-                       <div className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">{t.col}</div>
-                     </div>
-                   ))}
-                 </section>
-                 <section>
-                   <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">👥 팀원 현황</h3>
-                   <div className="flex flex-wrap gap-2">
-                     {members.map(m => (
-                       <div key={m.name} className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
-                         <Avatar name={m.name} members={members} size={20} />
-                         <span className="text-xs font-medium">{m.name}</span>
-                       </div>
-                     ))}
-                   </div>
-                 </section>
-               </div>
-             )}
-             {tab !== "홈" && (
-               <div className="text-center py-20 text-gray-400">
-                 기능을 불러오는 중입니다...<br/>(사용자님의 원본 로직이 이 자리에 채워집니다)
-               </div>
-             )}
-          </div>
-        </div>
-      );
-    }
-
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+  <!-- 렌더링 -->
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        var root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+      }, 500);
+    });
   </script>
 </body>
 </html>
