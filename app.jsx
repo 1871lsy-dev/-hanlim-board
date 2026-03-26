@@ -115,3 +115,6 @@ function App() {
     </div>
   );
 }
+// --- 렌더링 실행 (이 두 줄을 파일 맨 끝에 꼭 추가하세요!) ---
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
