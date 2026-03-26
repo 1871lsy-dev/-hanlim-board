@@ -3,7 +3,7 @@ import { ref, onValue, set, push, remove, update } from "firebase/database";
 
 const { useState, useEffect, useRef } = React;
 
-// 여기서부터는 건드리지 마세요 (기존 코드 시작)
+// --- 여기서부터는 기존 코드 (DEFAULT_MEMBERS)를 그대로 두시면 됩니다 ---
 const DEFAULT_MEMBERS = [
   {name:"최근주",color:"#6366F1"},{name:"김건식",color:"#EC4899"}, ...
 const DEFAULT_MEMBERS = [
