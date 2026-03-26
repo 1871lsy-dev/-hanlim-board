@@ -11,7 +11,7 @@ const firebaseConfig = {
   appId: "1:663569376513:web:a3829d45c6d01bbfb1e700"
 };
 
-// 파이어베이스 초기화 (딱 한 번만 실행)
+// 파이어베이스 초기화 (중복 실행 방지)
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
@@ -29,24 +29,13 @@ const DEFAULT_MEMBERS = [
 
 const COLS = ["할 일", "진행 중", "완료"];
 const TABS = ["홈", "칸반", "일정", "반복", "통계", "일지"];
-const WEEKDAYS = ["일","월","화","수","목","금","토"];
-
-const COL_STYLE = {
-  "할 일": {dot:"#6366F1", light:"#EEF2FF", text:"#3730A3"},
-  "진행 중": {dot:"#F59E0B", light:"#FFFBEB", text:"#92400E"},
-  "완료": {dot:"#10B981", light:"#ECFDF5", text:"#065F46"}
-};
-
 const PRIORITY_STYLE = {
-  "높음": {bg:"#FEE2E2", text:"#991B1B", bar:"#EF4444"},
-  "중간": {bg:"#FEF3C7", text:"#92400E", bar:"#F59E0B"},
-  "낮음": {bg:"#D1FAE5", text:"#065F46", bar:"#10B981"}
+  "높음": {bg:"#FEE2E2", text:"#991B1B"},
+  "중간": {bg:"#FEF3C7", text:"#92400E"},
+  "낮음": {bg:"#D1FAE5", text:"#065F46"}
 };
 
-// 유틸리티 함수
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-
-// --- UI 컴포넌트 시작 ---
+// --- UI 컴포넌트 ---
 function Avatar({name, members, size=26}){
   const m = members?.find(x=>x.name===name);
   const color = m?.color || "#6366F1";
@@ -68,14 +57,12 @@ function App() {
   const [tab, setTab] = useState("홈");
   const [loading, setLoading] = useState(true);
 
-  // 데이터 실시간 동기화
   useEffect(() => {
-    const ref = db.ref("hanlim");
+    const ref = db.ref("hanlim/tasks");
     ref.on("value", (snap) => {
       const data = snap.val();
       if (data) {
-        if (data.tasks) setTasks(Object.values(data.tasks));
-        if (data.members) setMembers(data.members);
+        setTasks(Object.values(data));
       }
       setLoading(false);
     });
@@ -89,55 +76,41 @@ function App() {
       {/* 헤더 */}
       <div style={{background:"#6366F1", padding:"20px", color:"#fff"}}>
         <div style={{fontSize:12, opacity:0.8}}>한림바이오팜 업무 현황</div>
-        <div style={{fontSize:22, fontWeight:700, marginTop:5}}>업무 보드 실시간 공유</div>
+        <div style={{fontSize:22, fontWeight:700, marginTop:5}}>실시간 업무 공유 보드</div>
       </div>
 
-      {/* 탭 버튼 */}
+      {/* 탭 메뉴 */}
       <div style={{display:"flex", background:"#fff", borderBottom:"1px solid #E5E7EB"}}>
         {TABS.map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{flex:1, padding:"15px 0", border:"none", background:"none", borderBottom:tab===t?"3px solid #6366F1":"none", color:tab===t?"#6366F1":"#9CA3AF", fontWeight:tab===t?700:400, cursor:"pointer"}}>
+          <button key={t} onClick={() => setTab(t)} style={{flex:1, padding:"15px 0", border:"none", background:"none", borderBottom:tab===t?"3px solid #6366F1":"none", color:tab===t?"#6366F1":"#9CA3AF", fontWeight:tab===t?700:400}}>
             {t}
           </button>
         ))}
       </div>
 
-      {/* 탭 내용 */}
+      {/* 업무 리스트 */}
       <div style={{padding:15}}>
         {tab === "홈" && (
           <div>
-            <div style={{display:"flex", gap:10, marginBottom:20}}>
-              {COLS.map(c => (
-                <div key={c} style={{flex:1, background:"#fff", padding:15, borderRadius:12, border:"1px solid #E5E7EB", textAlign:"center"}}>
-                  <div style={{fontSize:20, fontWeight:700, color:"#6366F1"}}>{tasks.filter(t=>t.col===c).length}</div>
-                  <div style={{fontSize:11, color:"#6B7280"}}>{c}</div>
-                </div>
-              ))}
-            </div>
-            <h3>📋 전체 업무 리스트</h3>
-            {tasks.map(task => {
-              const ps = PRIORITY_STYLE[task.priority] || PRIORITY_STYLE["중간"];
-              return (
-                <div key={task.id} style={{background:"#fff", padding:15, borderRadius:12, marginBottom:10, border:"1px solid #E5E7EB"}}>
+            <h3 style={{fontSize:15, marginBottom:15}}>📋 현재 업무 현황</h3>
+            {tasks.length === 0 ? <div style={{textAlign:"center", color:"#9CA3AF", padding:"40px 0"}}>등록된 업무가 없습니다.</div> : 
+              tasks.map(task => (
+                <div key={task.id} style={{background:"#fff", padding:15, borderRadius:12, marginBottom:10, border:"1px solid #E5E7EB", boxShadow:"0 1px 2px rgba(0,0,0,0.05)"}}>
                   <div style={{display:"flex", justifyContent:"space-between", marginBottom:8}}>
                     <div style={{fontWeight:600}}>{task.title}</div>
-                    <Pill label={task.priority} bg={ps.bg} color={ps.text} />
+                    <Pill label={task.priority} bg={PRIORITY_STYLE[task.priority]?.bg || "#F3F4F6"} color={PRIORITY_STYLE[task.priority]?.text || "#6B7280"} />
                   </div>
                   <div style={{display:"flex", alignItems:"center", gap:8}}>
                     <Avatar name={task.assignee} members={members} size={20} />
                     <span style={{fontSize:12, color:"#6B7280"}}>{task.assignee}</span>
-                    <span style={{marginLeft:"auto"}}><Pill label={task.col} bg="#F3F4F6" color="#6B7280" /></span>
+                    <span style={{marginLeft:"auto"}}><Pill label={task.col} bg="#EEF2FF" color="#6366F1" /></span>
                   </div>
                 </div>
-              );
-            })}
+              ))
+            }
           </div>
         )}
         {tab !== "홈" && <div style={{textAlign:"center", color:"#9CA3AF", padding:50}}>{tab} 기능은 준비 중입니다.</div>}
-      </div>
-
-      {/* 하단 바 */}
-      <div style={{position:"fixed", bottom:0, width:"100%", maxWidth:480, background:"#fff", borderTop:"1px solid #E5E7EB", display:"flex", justifyContent:"space-around", padding:"10px 0"}}>
-         {TABS.slice(0,3).map(t => <div key={t} style={{fontSize:10, color:"#9CA3AF"}}>{t}</div>)}
       </div>
     </div>
   );
