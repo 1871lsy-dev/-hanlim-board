@@ -1,9 +1,25 @@
-import { db } from "./firebase"; 
-import { ref, onValue, set, push, remove, update } from "firebase/database"; 
-
+// 1. 필요한 기능 불러오기 (중복 없이 한 번만!)
 const { useState, useEffect, useRef } = React;
 
-// --- 여기서부터는 기존 코드 (DEFAULT_MEMBERS)를 그대로 두시면 됩니다 ---
+// 2. 한림바이오팜 파이어베이스 연결 설정
+const firebaseConfig = {
+  apiKey: "AIzaSyC04Ir2Jt7nZrrJGfGwSxUWOkd3sv7kwDA",
+  authDomain: "hanlim-board.firebaseapp.com",
+  databaseURL: "https://hanlim-board-default-rtdb.firebaseio.com",
+  projectId: "hanlim-board",
+  storageBucket: "hanlim-board.firebasestorage.app",
+  messagingSenderId: "663569376513",
+  appId: "1:663569376513:web:a3829d45c6d01bbfb1e700"
+};
+
+// 3. 파이어베이스 초기화 (이미 연결되어 있으면 기존 것 사용)
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+
+// --- 여기서부터는 기존의 DEFAULT_MEMBERS 코드가 이어지면 됩니다 ---
+
 const DEFAULT_MEMBERS = [
   {name:"최근주",color:"#6366F1"},{name:"김건식",color:"#EC4899"}, ...
 const DEFAULT_MEMBERS = [
