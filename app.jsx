@@ -1,7 +1,7 @@
-// 1. 필요한 기능 불러오기 (중복 없이 한 번만!)
+// 1. 필요한 기능 불러오기 (딱 한 번만 선언!)
 const { useState, useEffect, useRef } = React;
 
-// 2. 한림바이오팜 파이어베이스 연결 설정
+// 2. 파이어베이스 설정 및 초기화
 const firebaseConfig = {
   apiKey: "AIzaSyC04Ir2Jt7nZrrJGfGwSxUWOkd3sv7kwDA",
   authDomain: "hanlim-board.firebaseapp.com",
@@ -12,23 +12,19 @@ const firebaseConfig = {
   appId: "1:663569376513:web:a3829d45c6d01bbfb1e700"
 };
 
-// 3. 파이어베이스 초기화 (이미 연결되어 있으면 기존 것 사용)
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-// --- 여기서부터는 기존의 DEFAULT_MEMBERS 코드가 이어지면 됩니다 ---
-
-const DEFAULT_MEMBERS = [
-  {name:"최근주",color:"#6366F1"},{name:"김건식",color:"#EC4899"}, ...
+// 3. 팀원 명단 (중복 없이 한 번만!)
 const DEFAULT_MEMBERS = [
   {name:"최근주",color:"#6366F1"},{name:"김건식",color:"#EC4899"},{name:"박종애",color:"#F59E0B"},
   {name:"장문식",color:"#10B981"},{name:"이수연",color:"#3B82F6"},{name:"손수현",color:"#EF4444"},
   {name:"전은진",color:"#8B5CF6"},{name:"정화연",color:"#14B8A6"},{name:"정소연",color:"#F97316"},
   {name:"신선옥",color:"#06B6D4"},{name:"이희수",color:"#84CC16"},{name:"김도현",color:"#A855F7"},
-  {name:"최성희",color:"#0EA5E9"},{name:"송태호",color:"#D946EF"},{name:"김흥기",color:"#22C55E"},
-  {name:"양희경",color:"#FB923C"},{name:"강선숙",color:"#64748B"},{name:"우희경",color:"#EAB308"},
+  {name:"최성희",color:"#0EA5E9"},{name:"송태호",color:"#D946EF"},{name:"김홍기",color:"#22C55E"},
+  {name:"양희경",color:"#FB923C"},{name:"강선숙",color:"#64748B"},{name:"우희경",color:"#EAB308"}
 ];
 const COLOR_OPTIONS = ["#6366F1","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#8B5CF6","#14B8A6","#F97316","#06B6D4","#84CC16","#A855F7","#0EA5E9","#D946EF","#22C55E","#FB923C","#64748B","#EAB308","#E11D48","#0891B2","#16A34A","#CA8A04","#7C3AED","#DB2777"];
 const COLS = ["할 일","진행 중","완료"];
