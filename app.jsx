@@ -1,46 +1,11 @@
-import { db } from "./firebase";// 1단계에서 만든 파일을 불러옵니다.
+import { db } from "./firebase"; 
 import { ref, onValue, set, push, remove, update } from "firebase/database"; 
-// ↑ 실시간 데이터베이스(RTDB) 기능을 불러옵니다.
-
-const { useState, useEffect, useRef } = React;
-// ─────────────────────────────────────────────
-// ⚠️  3단계에서 복사한 firebaseConfig 값으로 교체하세요
-// ─────────────────────────────────────────────
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyC04Ir2Jt7nZrrJGfGwSxUWOkd3sv7kwDA",
-  authDomain: "hanlim-board.firebaseapp.com",
-  databaseURL: "https://hanlim-board-default-rtdb.firebaseio.com",
-  projectId: "hanlim-board",
-  storageBucket: "hanlim-board.firebasestorage.app",
-  messagingSenderId: "663569376513",
-  appId: "1:663569376513:web:a3829d45c6d01bbfb1e700",
-};
-// ─────────────────────────────────────────────
 
 const { useState, useEffect, useRef } = React;
 
-// Firebase SDK 로드
-function loadFirebase(cb) {
-  if (window._fbReady) { cb(); return; }
-  const s1 = document.createElement("script");
-  s1.src = "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js";
-  s1.onload = () => {
-    const s2 = document.createElement("script");
-    s2.src = "https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js";
-    s2.onload = () => { window._fbReady = true; cb(); };
-    document.head.appendChild(s2);
-  };
-  document.head.appendChild(s1);
-}
-
-function getDb() {
-  if (!window._fbApp) {
-    window._fbApp = firebase.initializeApp(FIREBASE_CONFIG);
-  }
-  return firebase.database();
-}
-
-// ── 상수 ──
+// 여기서부터는 건드리지 마세요 (기존 코드 시작)
+const DEFAULT_MEMBERS = [
+  {name:"최근주",color:"#6366F1"},{name:"김건식",color:"#EC4899"}, ...
 const DEFAULT_MEMBERS = [
   {name:"최근주",color:"#6366F1"},{name:"김건식",color:"#EC4899"},{name:"박종애",color:"#F59E0B"},
   {name:"장문식",color:"#10B981"},{name:"이수연",color:"#3B82F6"},{name:"손수현",color:"#EF4444"},
