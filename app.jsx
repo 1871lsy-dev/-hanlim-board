@@ -1,3 +1,8 @@
+import { db } from "./firebase";// 1단계에서 만든 파일을 불러옵니다.
+import { ref, onValue, set, push, remove, update } from "firebase/database"; 
+// ↑ 실시간 데이터베이스(RTDB) 기능을 불러옵니다.
+
+const { useState, useEffect, useRef } = React;
 // ─────────────────────────────────────────────
 // ⚠️  3단계에서 복사한 firebaseConfig 값으로 교체하세요
 // ─────────────────────────────────────────────
