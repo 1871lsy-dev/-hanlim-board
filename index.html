@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>한림바이오팜 업무 현황 보드</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F8FAFC;color:#111827;}
@@ -88,15 +90,13 @@ textarea.inp{resize:none;}
 .agrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
 .abtn{padding:4px 10px;border-radius:999px;font-size:12px;display:flex;align-items:center;gap:4px;border:1.5px solid #E5E7EB;background:#fff;cursor:pointer;}
 .loading{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#6366F1;}
+.sync-dot{position:fixed;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:#10B981;z-index:999;}
 </style>
 </head>
 <body>
 <div id="app"></div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
+<script>
+// ── Firebase 초기화 ──
 const firebaseConfig = {
   apiKey: "AIzaSyC04Ir2Jt7nZrrJGfGwSxUWOkd3sv7kwDA",
   authDomain: "hanlim-board.firebaseapp.com",
@@ -106,11 +106,8 @@ const firebaseConfig = {
   messagingSenderId: "663569376513",
   appId: "1:663569376513:web:a3829d45c6d01bbfb1e700"
 };
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-function fbSet(path, val){ set(ref(db, "hanlim2/" + path), val); }
-function fbRemove(path){ remove(ref(db, "hanlim2/" + path)); }
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
 const COLORS=["#6366F1","#EC4899","#F59E0B","#10B981","#3B82F6","#EF4444","#8B5CF6","#14B8A6","#F97316","#06B6D4","#84CC16","#A855F7","#0EA5E9","#D946EF","#22C55E","#FB923C","#64748B","#EAB308","#E11D48","#0891B2","#16A34A","#CA8A04"];
 const COLS=["할 일","진행 중","완료"];
@@ -123,22 +120,33 @@ const PS={"높음":{bg:"#FEE2E2",text:"#991B1B"},"중간":{bg:"#FEF3C7",text:"#9
 const now=new Date(),TODAY=now.toISOString().split("T")[0],DOW=now.getDay();
 const DATE_STR=now.getFullYear()+"년 "+(now.getMonth()+1)+"월 "+now.getDate()+"일 ("+DAYS[DOW]+")";
 
-const DEFAULT_MEMBERS=[
-  {name:"최근주",color:"#6366F1"},{name:"김건식",color:"#EC4899"},{name:"박종애",color:"#F59E0B"},
-  {name:"장문식",color:"#10B981"},{name:"이수연",color:"#3B82F6"},{name:"손수현",color:"#EF4444"},
-  {name:"전은진",color:"#8B5CF6"},{name:"정화연",color:"#14B8A6"},{name:"정소연",color:"#F97316"},
-  {name:"신선옥",color:"#06B6D4"},{name:"이희수",color:"#84CC16"},{name:"김도현",color:"#A855F7"},
-  {name:"최성희",color:"#0EA5E9"},{name:"송태호",color:"#D946EF"},{name:"김흥기",color:"#22C55E"},
-  {name:"양희경",color:"#FB923C"},{name:"강선숙",color:"#64748B"},{name:"우희경",color:"#EAB308"}
-];
-const DEFAULT_TASKS=[
-  {id:"t1",title:"신제품 원료 수급 검토",assignee:"최근주",priority:"높음",due:TODAY,col:"할 일",comments:[]},
-  {id:"t2",title:"품질 관리 보고서 작성",assignee:"김건식",priority:"중간",due:TODAY,col:"진행 중",comments:[]},
-  {id:"t3",title:"GMP 감사 준비",assignee:"박종애",priority:"높음",due:"2026-04-10",col:"진행 중",comments:[]},
-  {id:"t4",title:"거래처 미팅 자료 준비",assignee:"장문식",priority:"낮음",due:"2026-04-15",col:"할 일",comments:[]},
-  {id:"t5",title:"1분기 생산 실적 집계",assignee:"이수연",priority:"중간",due:"2026-03-20",col:"완료",comments:[]},
-  {id:"t6",title:"포장재 발주 확인",assignee:"손수현",priority:"높음",due:TODAY,col:"할 일",comments:[]},
-];
+const DEFAULT={
+  members:[
+    {name:"최근주",color:"#6366F1"},{name:"김건식",color:"#EC4899"},{name:"박종애",color:"#F59E0B"},
+    {name:"장문식",color:"#10B981"},{name:"이수연",color:"#3B82F6"},{name:"손수현",color:"#EF4444"},
+    {name:"전은진",color:"#8B5CF6"},{name:"정화연",color:"#14B8A6"},{name:"정소연",color:"#F97316"},
+    {name:"신선옥",color:"#06B6D4"},{name:"이희수",color:"#84CC16"},{name:"김도현",color:"#A855F7"},
+    {name:"최성희",color:"#0EA5E9"},{name:"송태호",color:"#D946EF"},{name:"김흥기",color:"#22C55E"},
+    {name:"양희경",color:"#FB923C"},{name:"강선숙",color:"#64748B"},{name:"우희경",color:"#EAB308"}
+  ],
+  tasks:[
+    {id:"t1",title:"신제품 원료 수급 검토",assignee:"최근주",priority:"높음",due:TODAY,col:"할 일",comments:[]},
+    {id:"t2",title:"품질 관리 보고서 작성",assignee:"김건식",priority:"중간",due:TODAY,col:"진행 중",comments:[]},
+    {id:"t3",title:"GMP 감사 준비",assignee:"박종애",priority:"높음",due:"2026-04-05",col:"진행 중",comments:[]},
+    {id:"t4",title:"거래처 미팅 자료 준비",assignee:"장문식",priority:"낮음",due:"2026-04-10",col:"할 일",comments:[]},
+    {id:"t5",title:"1분기 생산 실적 집계",assignee:"이수연",priority:"중간",due:"2026-03-20",col:"완료",comments:[]},
+    {id:"t6",title:"포장재 발주 확인",assignee:"손수현",priority:"높음",due:TODAY,col:"할 일",comments:[]},
+  ],
+  schedules:[
+    {id:"s1",member:"최근주",date:TODAY,content:"오전 원료팀 회의"},
+    {id:"s2",member:"김건식",date:TODAY,content:"품질 점검 현장 방문"},
+  ],
+  recurring:[
+    {id:"r1",title:"주간 팀 미팅",days:[1],startH:"09",startM:"00",endH:"10",endM:"00",content:"전체 업무 현황 공유",assignee:"모두"},
+    {id:"r2",title:"품질 점검 회의",days:[3],startH:"14",startM:"00",endH:"15",endM:"00",content:"품질 이슈 검토",assignee:"김건식"},
+  ],
+  journals:[{id:"j1",date:TODAY,author:"최근주",memo:"오늘 원료팀 회의에서 신규 원료 수급 일정 확정."}],
+};
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 function dueStatus(d,col){
@@ -163,6 +171,10 @@ const S={
   jf:{author:"최근주",memo:""},
   members:[],tasks:[],schedules:[],recurring:[],journals:[],
 };
+
+// Firebase CRUD
+function fbSave(path,val){db.ref("hanlim/"+path).set(val);}
+function fbRemove(path){db.ref("hanlim/"+path).remove();}
 
 function re(){render();}
 function chkAnim(){S.chk=true;re();setTimeout(()=>{S.chk=false;re();},1200);}
@@ -226,6 +238,7 @@ function ticon(name,active){
   svg.innerHTML=paths[name]||"";return svg;
 }
 
+// 주간 달력
 function weekCal(){
   const wrap=el("div",{cls:"wc"});
   const days=[];for(let i=0;i<7;i++){const d=new Date(now);d.setDate(now.getDate()+i);days.push(d);}
@@ -267,6 +280,7 @@ function weekCal(){
   renderDet();return wrap;
 }
 
+// 탭 컨텐츠
 function tabHome(){
   const todayT=S.tasks.filter(t=>t.due===TODAY&&t.col!=="완료");
   const urgT=S.tasks.filter(t=>dueStatus(t.due,t.col));
@@ -279,12 +293,7 @@ function tabHome(){
   if(todayT.length===0)f.appendChild(el("div",{cls:"empty"},"오늘 예정된 업무가 없습니다 🎉"));
   todayT.forEach(t=>f.appendChild(tcard(t)));
   f.appendChild(el("div",{cls:"sh",style:{marginTop:"16px"}},el("div",{cls:"stitle"},"📅 오늘의 일정 ("+(todayS.length+todayR.length)+"건)"),el("button",{cls:"badd",onClick:()=>{S.modal="addSch";re();}},"+ 추가")));
-  [...todayR.map(r=>({...r,isRec:true})),...todayS].forEach(s=>{
-    f.appendChild(el("div",{cls:"si"},av(s.assignee||s.member,22),
-      el("div",{style:{flex:1}},el("div",{style:{fontSize:"13px",fontWeight:500}},s.content||s.title),...(s.isRec?[el("span",{style:{fontSize:"11px",color:"#8B5CF6"}},"🔁 반복")]:[])),
-      ...(s.startH?[el("span",{style:{fontSize:"11px",color:"#6B7280"}},s.startH+":"+s.startM)]:[])
-    ));
-  });
+  [...todayR.map(r=>({...r,isRec:true})),...todayS].forEach(s=>{f.appendChild(el("div",{cls:"si"},av(s.assignee||s.member,22),el("div",{style:{flex:1}},el("div",{style:{fontSize:"13px",fontWeight:500}},s.content||s.title),...(s.isRec?[el("span",{style:{fontSize:"11px",color:"#8B5CF6"}},"🔁 반복")]:[])),  ...(s.startH?[el("span",{style:{fontSize:"11px",color:"#6B7280"}},s.startH+":"+s.startM)]:[])));});
   f.appendChild(el("div",{cls:"sh",style:{marginTop:"20px"}},el("div",{cls:"stitle"},"👥 팀원 명단")));
   const chips=el("div",{cls:"chips"});
   S.members.forEach(m=>chips.appendChild(el("div",{cls:"chip"},el("div",{style:{width:"9px",height:"9px",borderRadius:"50%",background:m.color,flexShrink:0}}),el("span",null,m.name))));
@@ -306,60 +315,34 @@ function tabSchedule(){
   const di=el("input",{type:"date",cls:"inp",style:{marginBottom:"12px"},value:S.schedDay});
   di.addEventListener("change",e=>{S.schedDay=e.target.value;re();});f.appendChild(di);
   if(list.length===0){f.appendChild(el("div",{cls:"empty"},"선택한 날짜에 일정이 없습니다"));return f;}
-  list.forEach(s=>f.appendChild(el("div",{cls:"si"},av(s.member,26),
-    el("div",{style:{flex:1}},el("div",{style:{fontSize:"13px",fontWeight:600}},s.member),el("div",{style:{fontSize:"13px",color:"#374151",marginTop:"2px"}},s.content)),
-    el("button",{style:{border:"none",background:"none",fontSize:"16px",color:"#EF4444",padding:"4px"},onClick:()=>fbRemove("schedules/"+s.id)},"🗑")
-  )));
+  list.forEach(s=>f.appendChild(el("div",{cls:"si"},av(s.member,26),el("div",{style:{flex:1}},el("div",{style:{fontSize:"13px",fontWeight:600}},s.member),el("div",{style:{fontSize:"13px",color:"#374151",marginTop:"2px"}},s.content)),el("button",{style:{border:"none",background:"none",fontSize:"16px",color:"#EF4444",padding:"4px"},onClick:()=>{fbRemove("schedules/"+s.id);}},"🗑"))));
   return f;
 }
 function tabRecurring(){
   const f=document.createDocumentFragment();
   f.appendChild(el("div",{cls:"sh"},el("div",{cls:"stitle"},"🔁 반복 일정"),el("button",{cls:"badd",onClick:()=>{S.modal="addRec";re();}},"+ 추가")));
   if(S.recurring.length===0){f.appendChild(el("div",{cls:"empty"},"등록된 반복 일정이 없습니다"));return f;}
-  S.recurring.forEach(r=>f.appendChild(el("div",{cls:"rc"},
-    el("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"6px"}},el("div",{style:{fontSize:"14px",fontWeight:600}},r.title),el("button",{style:{border:"none",background:"none",fontSize:"14px",color:"#EF4444"},onClick:()=>fbRemove("recurring/"+r.id)},"✕")),
-    el("div",{style:{display:"flex",gap:"4px",marginBottom:"6px"}},...DAYS.map((d,i)=>el("span",{style:{width:"24px",height:"24px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:700,background:r.days.includes(i)?"#6366F1":"#F3F4F6",color:r.days.includes(i)?"#fff":"#9CA3AF"}},d))),
-    el("div",{style:{fontSize:"12px",color:"#6B7280"}},r.startH+":"+r.startM+" ~ "+r.endH+":"+r.endM+" • "+al(r.assignee)),
-    ...(r.content?[el("div",{style:{fontSize:"12px",color:"#374151",marginTop:"4px"}},r.content)]:[])
-  )));
+  S.recurring.forEach(r=>f.appendChild(el("div",{cls:"rc"},el("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"6px"}},el("div",{style:{fontSize:"14px",fontWeight:600}},r.title),el("button",{style:{border:"none",background:"none",fontSize:"14px",color:"#EF4444"},onClick:()=>{fbRemove("recurring/"+r.id);}},"✕")),el("div",{style:{display:"flex",gap:"4px",marginBottom:"6px"}},...DAYS.map((d,i)=>el("span",{style:{width:"24px",height:"24px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:700,background:r.days.includes(i)?"#6366F1":"#F3F4F6",color:r.days.includes(i)?"#fff":"#9CA3AF"}},d))),el("div",{style:{fontSize:"12px",color:"#6B7280"}},r.startH+":"+r.startM+" ~ "+r.endH+":"+r.endM+" • "+al(r.assignee)),...(r.content?[el("div",{style:{fontSize:"12px",color:"#374151",marginTop:"4px"}},r.content)]:[]))));
   return f;
 }
 function tabStats(){
   const total=S.tasks.length,done=S.tasks.filter(t=>t.col==="완료").length,pct=Math.round(done/Math.max(total,1)*100);
   const f=document.createDocumentFragment();
   f.appendChild(el("div",{style:{fontSize:"15px",fontWeight:700,marginBottom:"12px"}},"📊 업무 통계"));
-  f.appendChild(el("div",{style:{background:"#fff",borderRadius:"12px",border:"1px solid #E5E7EB",padding:"16px",marginBottom:"12px"}},
-    el("div",{style:{fontSize:"13px",fontWeight:600,marginBottom:"10px"}},"전체 현황"),
-    el("div",{style:{display:"flex",gap:"8px",marginBottom:"10px"}},...COLS.map(c=>{const cc=CS[c],cnt=S.tasks.filter(t=>t.col===c).length;return el("div",{style:{flex:1,background:cc.light,borderRadius:"10px",padding:"12px 8px",textAlign:"center"}},el("div",{style:{fontSize:"22px",fontWeight:700,color:cc.text}},String(cnt)),el("div",{style:{fontSize:"11px",color:cc.text,marginTop:"2px"}},c));})),
-    el("div",{cls:"pb"},el("div",{cls:"pbar",style:{width:pct+"%",background:"#10B981"}})),
-    el("div",{style:{fontSize:"11px",color:"#6B7280",textAlign:"right",marginTop:"4px"}},"완료율 "+pct+"%")
-  ));
+  f.appendChild(el("div",{style:{background:"#fff",borderRadius:"12px",border:"1px solid #E5E7EB",padding:"16px",marginBottom:"12px"}},el("div",{style:{fontSize:"13px",fontWeight:600,marginBottom:"10px"}},"전체 현황"),el("div",{style:{display:"flex",gap:"8px",marginBottom:"10px"}},...COLS.map(c=>{const cc=CS[c],cnt=S.tasks.filter(t=>t.col===c).length;return el("div",{style:{flex:1,background:cc.light,borderRadius:"10px",padding:"12px 8px",textAlign:"center"}},el("div",{style:{fontSize:"22px",fontWeight:700,color:cc.text}},String(cnt)),el("div",{style:{fontSize:"11px",color:cc.text,marginTop:"2px"}},c));})),el("div",{cls:"pb"},el("div",{cls:"pbar",style:{width:pct+"%",background:"#10B981"}})),el("div",{style:{fontSize:"11px",color:"#6B7280",textAlign:"right",marginTop:"4px"}},"완료율 "+pct+"%")));
   const byM=S.members.map(m=>{const mine=S.tasks.filter(t=>t.assignee===m.name||(Array.isArray(t.assignee)&&t.assignee.includes(m.name)));return{...m,total:mine.length,done:mine.filter(t=>t.col==="완료").length};}).filter(x=>x.total>0);
-  if(byM.length>0)f.appendChild(el("div",{style:{background:"#fff",borderRadius:"12px",border:"1px solid #E5E7EB",padding:"16px"}},
-    el("div",{style:{fontSize:"13px",fontWeight:600,marginBottom:"10px"}},"멤버별 현황"),
-    ...byM.map(s=>el("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}},av(s.name,28),
-      el("div",{style:{flex:1}},
-        el("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"13px",marginBottom:"3px"}},el("span",{style:{fontWeight:600}},s.name),el("span",{style:{color:"#6B7280",fontSize:"12px"}},s.done+"/"+s.total)),
-        el("div",{cls:"pb",style:{height:"6px"}},el("div",{cls:"pbar",style:{width:Math.round(s.done/Math.max(s.total,1)*100)+"%",background:s.color}}))
-      )
-    ))
-  ));
+  if(byM.length>0)f.appendChild(el("div",{style:{background:"#fff",borderRadius:"12px",border:"1px solid #E5E7EB",padding:"16px"}},el("div",{style:{fontSize:"13px",fontWeight:600,marginBottom:"10px"}},"멤버별 현황"),...byM.map(s=>el("div",{style:{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}},av(s.name,28),el("div",{style:{flex:1}},el("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"13px",marginBottom:"3px"}},el("span",{style:{fontWeight:600}},s.name),el("span",{style:{color:"#6B7280",fontSize:"12px"}},s.done+"/"+s.total)),el("div",{cls:"pb",style:{height:"6px"}},el("div",{cls:"pbar",style:{width:Math.round(s.done/Math.max(s.total,1)*100)+"%",background:s.color}})))))));
   return f;
 }
 function tabJournal(){
   const f=document.createDocumentFragment();
   f.appendChild(el("div",{cls:"sh"},el("div",{cls:"stitle"},"📝 업무 일지"),el("button",{cls:"badd",onClick:()=>{S.modal="addJournal";re();}},"+ 작성")));
   if(S.journals.length===0){f.appendChild(el("div",{cls:"empty"},"작성된 일지가 없습니다"));return f;}
-  S.journals.forEach(j=>f.appendChild(el("div",{cls:"card",onClick:()=>{S.viewJ=j;S.modal="viewJournal";re();}},
-    el("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}},
-      el("div",{style:{display:"flex",alignItems:"center",gap:"8px"}},av(j.author,22),el("span",{style:{fontSize:"13px",fontWeight:600}},j.author)),
-      el("span",{style:{fontSize:"11px",color:"#9CA3AF"}},j.date)
-    ),
-    el("div",{style:{fontSize:"13px",color:"#374151",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},j.memo)
-  )));
+  S.journals.forEach(j=>f.appendChild(el("div",{cls:"card",onClick:()=>{S.viewJ=j;S.modal="viewJournal";re();}},el("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}},el("div",{style:{display:"flex",alignItems:"center",gap:"8px"}},av(j.author,22),el("span",{style:{fontSize:"13px",fontWeight:600}},j.author)),el("span",{style:{fontSize:"11px",color:"#9CA3AF"}},j.date)),el("div",{style:{fontSize:"13px",color:"#374151",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},j.memo))));
   return f;
 }
 
+// 모달
 function mSettings(){
   const box=el("div",{style:{background:"#F8FAFC",borderRadius:"12px",border:"1px solid #E5E7EB",padding:"10px"}});
   S.members.forEach((m,idx)=>{
@@ -367,27 +350,23 @@ function mSettings(){
     ni.addEventListener("change",e=>{
       const nv=e.target.value.trim();if(!nv)return;
       const nm=[...S.members];nm[idx]={...nm[idx],name:nv};
-      fbSet("members",nm);
+      fbSave("members",nm);
     });
     const dot=el("div",{cls:"cd",style:{background:m.color,border:"2px solid "+m.color+"99"},onClick:()=>{S.palIdx=S.palIdx===idx?null:idx;re();}});
-    const del=el("button",{style:{border:"none",background:"none",fontSize:"15px",color:"#EF4444",padding:"0 4px",flexShrink:0},onClick:()=>{const nm=S.members.filter((_,i)=>i!==idx);fbSet("members",nm);if(S.palIdx===idx)S.palIdx=null;}},"🗑");
+    const del=el("button",{style:{border:"none",background:"none",fontSize:"15px",color:"#EF4444",padding:"0 4px",flexShrink:0},onClick:()=>{const nm=S.members.filter((_,i)=>i!==idx);fbSave("members",nm);if(S.palIdx===idx)S.palIdx=null;}},"🗑");
     box.appendChild(el("div",{cls:"sr"},av(m.name,24),ni,dot,del));
     if(S.palIdx===idx){
       const pal=el("div",{cls:"pal"});
-      COLORS.forEach(c=>{pal.appendChild(el("div",{cls:"pd"+(c===m.color?" sel":""),style:{background:c,borderColor:c===m.color?"#111827":c},onClick:()=>{const nm=[...S.members];nm[idx]={...nm[idx],color:c};fbSet("members",nm);S.palIdx=null;}});});
+      COLORS.forEach(c=>{pal.appendChild(el("div",{cls:"pd"+(c===m.color?" sel":""),style:{background:c,borderColor:c===m.color?"#111827":c},onClick:()=>{const nm=[...S.members];nm[idx]={...nm[idx],color:c};fbSave("members",nm);S.palIdx=null;}});});
       box.appendChild(pal);
     }
   });
-  return modal("⚙️ 팀원 설정",el("div",null,
-    el("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:"10px"}},
-      el("button",{cls:"badd",onClick:()=>fbSet("members",[...S.members,{name:"새팀원"+(S.members.length+1),color:"#6366F1"}])},"+ 추가")
-    ),box
-  ));
+  return modal("⚙️ 팀원 설정",el("div",null,el("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:"10px"}},el("button",{cls:"badd",onClick:()=>{fbSave("members",[...S.members,{name:"새팀원"+(S.members.length+1),color:"#6366F1"}]);}},"+ 추가")),box));
 }
 function mDetail(){
   const task=S.detTask;
-  function mv(col){fbSet("tasks/"+task.id,{...task,col});S.detTask={...task,col};if(col==="완료")chkAnim();else re();}
-  function addC(){if(!S.newCmt.trim())return;const u={...task,comments:[...(task.comments||[]),S.newCmt.trim()]};fbSet("tasks/"+task.id,u);S.detTask=u;S.newCmt="";re();}
+  function mv(col){fbSave("tasks/"+task.id,{...task,col});S.detTask={...task,col};if(col==="완료")chkAnim();else re();}
+  function addC(){if(!S.newCmt.trim())return;const u={...task,comments:[...(task.comments||[]),S.newCmt.trim()]};fbSave("tasks/"+task.id,u);S.detTask=u;S.newCmt="";re();}
   const inp=el("input",{cls:"inp",style:{flex:1},placeholder:"댓글 입력..."});
   inp.value=S.newCmt;inp.addEventListener("input",e=>{S.newCmt=e.target.value;});inp.addEventListener("keydown",e=>{if(e.key==="Enter")addC();});
   return modal(task.title,el("div",null,
@@ -410,13 +389,7 @@ function mAddTask(){
     el("label",{cls:"fl"},"업무명"),ti,el("label",{cls:"fl"},"담당자"),aw,
     el("label",{cls:"fl"},"우선순위"),el("div",{cls:"pbtns"},...["높음","중간","낮음"].map(p=>el("button",{cls:"pbtn"+(f.priority===p?" on":""),onClick:()=>{S.tf.priority=p;re();}},p))),
     el("label",{cls:"fl"},"열"),cs,el("label",{cls:"fl"},"마감일"),di,
-    el("button",{cls:"bp",onClick:()=>{
-      if(!S.tf.title.trim())return;
-      const t={...S.tf,id:uid(),comments:[]};
-      fbSet("tasks/"+t.id,t);
-      S.tf={title:"",assignee:"모두",priority:"중간",due:TODAY,col:"할 일"};
-      S.modal=null;chkAnim();
-    }},"추가하기")
+    el("button",{cls:"bp",onClick:()=>{if(!S.tf.title.trim())return;const t={...S.tf,id:uid(),comments:[]};fbSave("tasks/"+t.id,t);S.tf={title:"",assignee:"모두",priority:"중간",due:TODAY,col:"할 일"};S.modal=null;chkAnim();}},"추가하기")
   ));
 }
 function mAddSch(){
@@ -426,12 +399,7 @@ function mAddSch(){
   const ta=el("textarea",{cls:"inp",style:{height:"80px"},placeholder:"일정 내용"});ta.value=f.content;ta.addEventListener("input",e=>{S.sf.content=e.target.value;});
   return modal("일정 추가",el("div",null,
     el("label",{cls:"fl"},"담당자"),ms,el("label",{cls:"fl"},"날짜"),di,el("label",{cls:"fl"},"내용"),ta,
-    el("button",{cls:"bp",onClick:()=>{
-      if(!S.sf.content.trim())return;
-      const s={...S.sf,id:uid()};
-      fbSet("schedules/"+s.id,s);
-      S.sf={member:"최근주",date:TODAY,content:""};S.modal=null;chkAnim();
-    }},"추가하기")
+    el("button",{cls:"bp",onClick:()=>{if(!S.sf.content.trim())return;const s={...S.sf,id:uid()};fbSave("schedules/"+s.id,s);S.sf={member:"최근주",date:TODAY,content:""};S.modal=null;chkAnim();}},"추가하기")
   ));
 }
 function mAddRec(){
@@ -447,13 +415,7 @@ function mAddRec(){
     el("label",{cls:"fl"},"시작 시간"),el("div",{cls:"tr"},hs(f.startH,v=>{S.rf.startH=v;}),ms(f.startM,v=>{S.rf.startM=v;})),
     el("label",{cls:"fl"},"종료 시간"),el("div",{cls:"tr"},hs(f.endH,v=>{S.rf.endH=v;}),ms(f.endM,v=>{S.rf.endM=v;})),
     el("label",{cls:"fl"},"담당자"),aw,el("label",{cls:"fl"},"내용"),ta,
-    el("button",{cls:"bp",onClick:()=>{
-      if(!S.rf.title.trim()||S.rf.days.length===0)return;
-      const r={...S.rf,id:uid()};
-      fbSet("recurring/"+r.id,r);
-      S.rf={title:"",days:[],startH:"09",startM:"00",endH:"10",endM:"00",content:"",assignee:"모두"};
-      S.modal=null;chkAnim();
-    }},"추가하기")
+    el("button",{cls:"bp",onClick:()=>{if(!S.rf.title.trim()||S.rf.days.length===0)return;const r={...S.rf,id:uid()};fbSave("recurring/"+r.id,r);S.rf={title:"",days:[],startH:"09",startM:"00",endH:"10",endM:"00",content:"",assignee:"모두"};S.modal=null;chkAnim();}},"추가하기")
   ));
 }
 function mAddJournal(){
@@ -462,12 +424,7 @@ function mAddJournal(){
   const ta=el("textarea",{cls:"inp",style:{height:"120px"},placeholder:"오늘의 업무 내용을 기록하세요..."});ta.value=f.memo;ta.addEventListener("input",e=>{S.jf.memo=e.target.value;});
   return modal("업무 일지 작성",el("div",null,
     el("label",{cls:"fl"},"작성자"),as,el("label",{cls:"fl"},"내용"),ta,
-    el("button",{cls:"bp",onClick:()=>{
-      if(!S.jf.memo.trim())return;
-      const j={id:uid(),date:TODAY,...S.jf};
-      fbSet("journals/"+j.id,j);
-      S.jf={author:"최근주",memo:""};S.modal=null;chkAnim();
-    }},"💾 저장")
+    el("button",{cls:"bp",onClick:()=>{if(!S.jf.memo.trim())return;const j={id:uid(),date:TODAY,...S.jf};fbSave("journals/"+j.id,j);S.jf={author:"최근주",memo:""};S.modal=null;chkAnim();}},"💾 저장")
   ));
 }
 function mViewJournal(){
@@ -487,12 +444,9 @@ function render(){
     return;
   }
   if(S.chk){app.appendChild(el("div",{cls:"ca"},el("div",{style:{background:"#fff",borderRadius:"24px",padding:"28px 36px",boxShadow:"0 8px 32px rgba(0,0,0,.15)",display:"flex",flexDirection:"column",alignItems:"center",gap:"10px"}},el("div",{style:{width:"56px",height:"56px",borderRadius:"50%",background:"#ECFDF5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"28px"}},"✅"),el("div",{style:{fontSize:"15px",fontWeight:700,color:"#065F46"}},"완료!"))));}
-  app.appendChild(el("div",{cls:"hdr"},
-    el("div",{cls:"hdr-sub"},"한림바이오팜 업무 보드"),
-    el("div",{cls:"hdr-date"},DATE_STR),
-    el("button",{cls:"btn-gear",onClick:()=>{S.modal="settings";re();}},"⚙️"),
-    el("div",{cls:"hdr-stats"},...COLS.map(c=>{const emoji={"할 일":"📋","진행 중":"⏳","완료":"✅"}[c];return el("div",{cls:"sbox"},el("div",{cls:"snum"},emoji+" "+S.tasks.filter(t=>t.col===c).length),el("div",{cls:"slbl"},c));}))
-  ));
+  // Firebase 연결 상태 표시
+  app.appendChild(el("div",{cls:"sync-dot",title:"Firebase 연결됨"}));
+  app.appendChild(el("div",{cls:"hdr"},el("div",{cls:"hdr-sub"},"한림바이오팜 업무 보드"),el("div",{cls:"hdr-date"},DATE_STR),el("button",{cls:"btn-gear",onClick:()=>{S.modal="settings";re();}},"⚙️"),el("div",{cls:"hdr-stats"},...COLS.map(c=>{const emoji={"할 일":"📋","진행 중":"⏳","완료":"✅"}[c];return el("div",{cls:"sbox"},el("div",{cls:"snum"},emoji+" "+S.tasks.filter(t=>t.col===c).length),el("div",{cls:"slbl"},c));}))));
   app.appendChild(el("div",{cls:"ttabs"},...TABS.map(t=>el("button",{cls:"ttab"+(S.tab===t?" on":""),onClick:()=>{S.tab=t;re();}},t))));
   const cnt=el("div",{cls:"cnt"});
   if(S.tab==="홈")cnt.appendChild(tabHome());
@@ -515,20 +469,29 @@ function render(){
 }
 
 // Firebase 실시간 리스너
-onValue(ref(db,"hanlim2"), snap=>{
-  const d=snap.val();
-  if(d){
-    if(d.members)S.members=Array.isArray(d.members)?d.members:Object.values(d.members);
-    S.tasks=d.tasks?Object.values(d.tasks):[];
-    S.schedules=d.schedules?Object.values(d.schedules):[];
-    S.recurring=d.recurring?Object.values(d.recurring).map(r=>({...r,days:Array.isArray(r.days)?r.days:[]})):[];
-    S.journals=d.journals?Object.values(d.journals).sort((a,b)=>b.date.localeCompare(a.date)):[];
+db.ref("hanlim").on("value", snap => {
+  const d = snap.val();
+  if (d) {
+    if (d.members) S.members = Array.isArray(d.members) ? d.members : Object.values(d.members);
+    if (d.tasks) S.tasks = Object.values(d.tasks);
+    else S.tasks = [];
+    if (d.schedules) S.schedules = Object.values(d.schedules);
+    else S.schedules = [];
+    if (d.recurring) S.recurring = Object.values(d.recurring).map(r=>({...r,days:Array.isArray(r.days)?r.days:[]}));
+    else S.recurring = [];
+    if (d.journals) S.journals = Object.values(d.journals).sort((a,b)=>b.date.localeCompare(a.date));
+    else S.journals = [];
   } else {
-    fbSet("members", DEFAULT_MEMBERS);
-    const taskObj=toObj(DEFAULT_TASKS);
-    fbSet("tasks", taskObj);
+    // 초기 데이터 세팅
+    db.ref("hanlim").set({
+      members: DEFAULT.members,
+      tasks: toObj(DEFAULT.tasks),
+      schedules: toObj(DEFAULT.schedules),
+      recurring: toObj(DEFAULT.recurring),
+      journals: toObj(DEFAULT.journals),
+    });
   }
-  S.loaded=true;
+  S.loaded = true;
   re();
 });
 
