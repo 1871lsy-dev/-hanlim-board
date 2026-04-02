@@ -9,15 +9,15 @@ function mSettings(){
       fbSave("members",nm);
     });
     const dot=el("div",{cls:"cd",style:{background:m.color,border:"2px solid "+m.color+"99"},onClick:()=>{S.palIdx=S.palIdx===idx?null:idx;re();}});
-    const del=el("button",{style:{border:"none",background:"none",fontSize:"15px",color:"#EF4444",padding:"0 4px",flexShrink:0},onClick:()=>{const nm=S.members.filter((_,i)=>i!==idx);fbSave("members",nm);if(S.palIdx===idx)S.palIdx=null;}},"🗑");
+    const del=el("button",{style:{border:"none",background:"none",fontSize:"15px",color:"#EF4444",padding:"0 4px",flexShrink:0},onClick:()=>{const nm=S.members.filter((_,i)=>i!==idx);S.members=nm;fbSave("members",nm);if(S.palIdx===idx)S.palIdx=null;re();}},"🗑");
     box.appendChild(el("div",{cls:"sr"},av(m.name,24),ni,dot,del));
     if(S.palIdx===idx){
       const pal=el("div",{cls:"pal"});
-      COLORS.forEach(c=>{pal.appendChild(el("div",{cls:"pd"+(c===m.color?" sel":""),style:{background:c,borderColor:c===m.color?"#111827":c},onClick:()=>{const nm=[...S.members];nm[idx]={...nm[idx],color:c};fbSave("members",nm);S.palIdx=null;}});});
+      COLORS.forEach(c=>{pal.appendChild(el("div",{cls:"pd"+(c===m.color?" sel":""),style:{background:c,borderColor:c===m.color?"#111827":c},onClick:()=>{const nm=[...S.members];nm[idx]={...nm[idx],color:c};S.members=nm;fbSave("members",nm);S.palIdx=null;re();}});});
       box.appendChild(pal);
     }
   });
-  return modal("⚙️ 팀원 설정",el("div",null,el("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:"10px"}},el("button",{cls:"badd",onClick:()=>{fbSave("members",[...S.members,{name:"새팀원"+(S.members.length+1),color:"#6366F1"}]);}},"+ 추가")),box));
+  return modal("⚙️ 팀원 설정",el("div",null,el("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:"10px"}},el("button",{cls:"badd",onClick:()=>{const nm=[...S.members,{name:"새팀원"+(S.members.length+1),color:"#6366F1"}];S.members=nm;fbSave("members",nm);re();}},"+ 추가")),box));
 }
 function mDetail(){
   const task=S.detTask;
@@ -80,7 +80,7 @@ function mAddJournal(){
   const ta=el("textarea",{cls:"inp",style:{height:"120px"},placeholder:"오늘의 업무 내용을 기록하세요..."});ta.value=f.memo;ta.addEventListener("input",e=>{S.jf.memo=e.target.value;});
   return modal("업무 일지 작성",el("div",null,
     el("label",{cls:"fl"},"작성자"),as,el("label",{cls:"fl"},"내용"),ta,
-    el("button",{cls:"bp",onClick:()=>{if(!S.jf.memo.trim())return;const j={id:uid(),date:TODAY,...S.jf};fbSave("journals/"+j.id,j);S.jf={author:"최근주",memo:""};S.modal=null;chkAnim();}},"💾 저장")
+    el("button",{cls:"bp",onClick:()=>{const memo=ta.value.trim();if(!memo)return;const j={id:uid(),date:TODAY,author:S.jf.author,memo};fbSave("journals/"+j.id,j);S.jf={author:S.jf.author,memo:""};S.modal=null;chkAnim();}},"💾 저장")
   ));
 }
 function mViewJournal(){
