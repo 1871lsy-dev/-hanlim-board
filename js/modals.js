@@ -1,23 +1,62 @@
 // 모달
 function mSettings(){
-  const box=el("div",{style:{background:"#F8FAFC",borderRadius:"12px",border:"1px solid #E5E7EB",padding:"10px"}});
-  S.members.forEach((m,idx)=>{
-    const ni=el("input",{cls:"ni",value:m.name});
-    ni.addEventListener("change",e=>{
-      const nv=e.target.value.trim();if(!nv)return;
-      const nm=[...S.members];nm[idx]={...nm[idx],name:nv};
-      fbSave("members",nm);
+  const box = el("div", {style:{background:"#F8FAFC",borderRadius:"12px",border:"1px solid #E5E7EB",padding:"10px"}});
+
+  S.members.forEach(function(m, idx){
+    const ni = el("input", {cls:"ni", value:m.name});
+    ni.addEventListener("change", function(e){
+      const nv = e.target.value.trim();
+      if(!nv) return;
+      const nm = S.members.slice();
+      nm[idx] = Object.assign({}, nm[idx], {name: nv});
+      fbSave("members", nm);
     });
-    const dot=el("div",{cls:"cd",style:{background:m.color,border:"2px solid "+m.color+"99"},onClick:()=>{S.palIdx=S.palIdx===idx?null:idx;re();}});
-    const del=el("button",{style:{border:"none",background:"none",fontSize:"15px",color:"#EF4444",padding:"0 4px",flexShrink:0},onClick:()=>{const nm=S.members.filter((_,i)=>i!==idx);S.members=nm;fbSave("members",nm);if(S.palIdx===idx)S.palIdx=null;re();}},"🗑");
-    box.appendChild(el("div",{cls:"sr"},av(m.name,24),ni,dot,del));
-    if(S.palIdx===idx){
-      const pal=el("div",{cls:"pal"});
-      COLORS.forEach(c=>{pal.appendChild(el("div",{cls:"pd"+(c===m.color?" sel":""),style:{background:c,borderColor:c===m.color?"#111827":c},onClick:()=>{const nm=[...S.members];nm[idx]={...nm[idx],color:c};S.members=nm;fbSave("members",nm);S.palIdx=null;re();}});});
+
+    const dot = el("div", {cls:"cd", style:{background:m.color, border:"2px solid "+m.color+"99"}});
+    dot.addEventListener("click", function(){
+      S.palIdx = S.palIdx === idx ? null : idx;
+      re();
+    });
+
+    const del = el("button", {style:{border:"none",background:"none",fontSize:"15px",color:"#EF4444",padding:"0 4px",flexShrink:0}}, "🗑");
+    del.addEventListener("click", function(){
+      const nm = S.members.filter(function(_, i){ return i !== idx; });
+      S.members = nm;
+      fbSave("members", nm);
+      if(S.palIdx === idx) S.palIdx = null;
+      setTimeout(re, 0);
+    });
+
+    box.appendChild(el("div", {cls:"sr"}, av(m.name, 24), ni, dot, del));
+
+    if(S.palIdx === idx){
+      const pal = el("div", {cls:"pal"});
+      COLORS.forEach(function(c){
+        const pd = el("div", {cls:"pd"+(c===m.color?" sel":""), style:{background:c, borderColor:c===m.color?"#111827":c}});
+        pd.addEventListener("click", function(){
+          const nm = S.members.slice();
+          nm[idx] = Object.assign({}, nm[idx], {color: c});
+          S.members = nm;
+          fbSave("members", nm);
+          S.palIdx = null;
+          setTimeout(re, 0);
+        });
+        pal.appendChild(pd);
+      });
       box.appendChild(pal);
     }
   });
-  return modal("⚙️ 팀원 설정",el("div",null,el("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:"10px"}},el("button",{cls:"badd",onClick:()=>{const nm=[...S.members,{name:"새팀원"+(S.members.length+1),color:"#6366F1"}];S.members=nm;fbSave("members",nm);re();}},"+ 추가")),box));
+
+  const addBtn = el("button", {cls:"badd"}, "+ 추가");
+  addBtn.addEventListener("click", function(){
+    const nm = S.members.concat([{name:"새팀원"+(S.members.length+1), color:"#6366F1"}]);
+    S.members = nm;
+    fbSave("members", nm);
+    setTimeout(re, 0);
+  });
+
+  const header = el("div", {style:{display:"flex",justifyContent:"flex-end",marginBottom:"10px"}}, addBtn);
+  return modal("⚙️ 팀원 설정", el("div", null, header, box));
 }
 function mDetail(){
   const task=S.detTask;
